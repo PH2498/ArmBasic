@@ -1,0 +1,6 @@
+# 语音 AI 交互（含麦克风）
+dashscope>=1.14.0
+SpeechRecognition>=3.10.0
+PyAudio>=0.2.14
+edge-tts>=6.1.0
+opencv-python>=4.5.0

@@ -1,0 +1,4 @@
+# 必须用 opencv-python（不要用 opencv-python-headless，否则无人脸检测模型）
+opencv-python>=4.5.0
+face_recognition>=1.3.0
+Pillow>=8.0.0

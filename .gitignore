@@ -1,0 +1,4 @@
+AISpeechInteraction/.env
+AISpeechInteraction/_tts_out.mp3
+FaceRecognitionModule/known_faces/*
+!FaceRecognitionModule/known_faces/.gitkeep
