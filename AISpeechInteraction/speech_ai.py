@@ -480,6 +480,16 @@ class AudioPlayer:
         if self._play_thread and self._play_thread.is_alive():
             self._play_thread.join(timeout=0.2)
 
+        try:
+            for name in os.listdir(self._temp_dir):
+                if name.endswith(".mp3"):
+                    try:
+                        os.remove(os.path.join(self._temp_dir, name))
+                    except:
+                        pass
+        except:
+            pass
+
     def is_playing(self):
         return self._play_thread and self._play_thread.is_alive()
 
@@ -502,6 +512,7 @@ class SpeechAssistant:
         self.mic = None
         self.whisper_model = None
         self.player = AudioPlayer()
+        self._llm_stop_event = threading.Event()
         
         # 唤醒词
         self.WAKE_WORD = "小笨"
@@ -517,15 +528,15 @@ class SpeechAssistant:
         """初始化麦克风与环境噪音。"""
         if self.mic: return
         print("🎤 初始化麦克风...")
-        self.mic = sr.Microphone()
+        self.mic = sr.Microphone(sample_rate=16000, chunk_size=1024)
         with self.mic as source:
             # 仅校准一次
             print("🔇 正在校准环境噪音 (请保持安静 1秒)...")
             self.r.adjust_for_ambient_noise(source, duration=1)
             # 校准后关闭动态调整，防止 AI 说话时阈值漂移
             self.r.dynamic_energy_threshold = False
-            # 稍微提高一点阈值以过滤呼吸声
-            self.r.energy_threshold *= 1.2
+            # 固定阈值，避免因为扬声器导致阈值漂移
+            self.r.energy_threshold = max(60, self.r.energy_threshold)
             print(f"✅ 校准完成 (阈值: {self.r.energy_threshold:.0f})")
 
     def _init_static_audio(self):
@@ -581,17 +592,17 @@ class SpeechAssistant:
         if not self.mic: return None
         
         # 优化打断：AI 说话时，使用极短的窗口(1s)进行切片监听
-        phrase_limit = 1 if is_speaking else 15
-        timeout = 1 if is_speaking else 10
+        phrase_limit = 0.8 if is_speaking else 8
+        timeout = 0.6 if is_speaking else 6
         
         with self.mic as source:
             try:
                 # pause_threshold: 说话后停顿多久算结束。
-                # 正常对话 0.4s (加快)，打断时 0.2s (极速)
-                self.r.pause_threshold = 0.2 if is_speaking else 0.4
+                # 正常对话 0.35s (更快)，打断时 0.18s (极速)
+                self.r.pause_threshold = 0.18 if is_speaking else 0.35
                 
                 # non_speaking_duration: 多少秒静音算没人说话
-                self.r.non_speaking_duration = 0.2
+                self.r.non_speaking_duration = 0.18
                 
                 audio = self.r.listen(source, timeout=timeout, phrase_time_limit=phrase_limit)
             except sr.WaitTimeoutError:
@@ -608,7 +619,16 @@ class SpeechAssistant:
                 with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
                     f.write(audio.get_wav_data())
                     tmp = f.name
-                res = w_model.transcribe(tmp, language="zh", fp16=False)
+                res = w_model.transcribe(
+                    tmp,
+                    language="zh",
+                    fp16=False,
+                    beam_size=1,
+                    best_of=1,
+                    temperature=0.0,
+                    condition_on_previous_text=False,
+                    no_speech_threshold=0.6
+                )
                 text = res.get("text", "").strip()
                 os.remove(tmp)
             except:
@@ -669,6 +689,7 @@ class SpeechAssistant:
                     
                     if is_wake:
                         print(f"⚡️ 触发打断！")
+                        self._llm_stop_event.set()
                         self.player.stop()
                         self.is_active = True
                         self.last_active_time = time.time()
@@ -712,6 +733,7 @@ class SpeechAssistant:
                 time.sleep(1)
 
     def _handle_command(self, text):
+        self._llm_stop_event.clear()
         # 视觉
         img_path = None
         if _need_vision_context(text):
@@ -737,13 +759,15 @@ class SpeechAssistant:
         # 包装生成器以打印输出
         def _printing_gen():
             for chunk in stream_gen:
+                if self._llm_stop_event.is_set():
+                    break
                 print(chunk, end="", flush=True)
                 yield chunk
             print("") # 换行
 
         # 播放流式音频
         # 使用 zh-CN-YunyangNeural (新闻男声) + rate="+10%" (自然语速) + pitch="-5Hz" 模拟沉稳贾维斯风格
-        self.player.play_stream(_printing_gen(), voice="zh-CN-YunyangNeural", rate="+10%", pitch="-5Hz", blocking=True)
+        self.player.play_stream(_printing_gen(), voice="zh-CN-YunyangNeural", rate="+10%", pitch="-5Hz", blocking=False)
 
 
 def main():
