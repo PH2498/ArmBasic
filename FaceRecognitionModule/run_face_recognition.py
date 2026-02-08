@@ -9,6 +9,7 @@ import cv2
 import sys
 import os
 import numpy as np
+import time
 
 # 使用已安装的 face_recognition 库（脚本名必须不是 face_recognition.py）
 try:
@@ -244,11 +245,16 @@ def recognize_faces_from_camera(known_faces_dir=None):
     if idx < 0:
         return []
     cap = cv2.VideoCapture(idx)
-    for _ in range(5):
-        cap.read()
-    ret, frame = cap.read()
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+    start = time.time()
+    frame = None
+    while time.time() - start < 1.5:
+        ret, frm = cap.read()
+        if ret and frm is not None:
+            frame = frm
     cap.release()
-    if not ret or frame is None:
+    if frame is None:
         return []
     return recognize_faces_from_frame(frame, known_encodings, known_names)
 
