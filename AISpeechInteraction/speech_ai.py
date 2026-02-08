@@ -260,8 +260,9 @@ class AudioPlayer:
             buffer = ""
             idx = 0
             
-            # 正则：匹配标点符号
-            split_pattern = r'([。！？；!?;]+)'
+            # 优化切分正则：增加更多短句切分符，使首句更早产出
+            # 增加逗号和顿号切分，虽然会增加请求频率，但能显著降低首句延迟
+            split_pattern = r'([。！？；，、!?,;]+)'
             
             try:
                 for chunk in text_generator:
@@ -591,27 +592,37 @@ class SpeechAssistant:
         """监听并返回文本。支持打断检测。"""
         if not self.mic: return None
         
-        # 优化打断：AI 说话时，使用极短的窗口(1s)进行切片监听
-        phrase_limit = 0.8 if is_speaking else 8
-        timeout = 0.6 if is_speaking else 6
+        # 优化打断：AI 说话时，使用极短的窗口(0.6s)进行切片监听，提高响应速度
+        phrase_limit = 0.6 if is_speaking else 8
+        timeout = 0.5 if is_speaking else 6
         
         with self.mic as source:
+            # 动态调整阈值：AI 说话时大幅提高阈值，过滤掉 AI 自己的声音
+            original_threshold = self.r.energy_threshold
+            if is_speaking:
+                # 经验值：将阈值提高到 5 倍或至少 2000，防止 AI 自言自语触发识别
+                self.r.energy_threshold = max(original_threshold * 5, 2000)
+            
             try:
                 # pause_threshold: 说话后停顿多久算结束。
-                # 正常对话 0.35s (更快)，打断时 0.18s (极速)
-                self.r.pause_threshold = 0.18 if is_speaking else 0.35
+                # 正常对话 0.25s (更极速)，打断时 0.12s (毫秒级响应)
+                self.r.pause_threshold = 0.12 if is_speaking else 0.25
                 
                 # non_speaking_duration: 多少秒静音算没人说话
-                self.r.non_speaking_duration = 0.18
+                self.r.non_speaking_duration = 0.12
                 
                 audio = self.r.listen(source, timeout=timeout, phrase_time_limit=phrase_limit)
             except sr.WaitTimeoutError:
                 return None
-            except Exception as e:
+            except Exception:
                 return None
+            finally:
+                # 恢复原始阈值
+                if is_speaking:
+                    self.r.energy_threshold = original_threshold
 
         text = ""
-        # 1. Whisper
+        # 1. Whisper (优先，准确率高)
         w_model = self._get_whisper()
         if w_model:
             try:
@@ -619,6 +630,8 @@ class SpeechAssistant:
                 with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
                     f.write(audio.get_wav_data())
                     tmp = f.name
+                
+                # 优化 Whisper 参数：增加 initial_prompt 引导识别，提高唤醒词准确率
                 res = w_model.transcribe(
                     tmp,
                     language="zh",
@@ -626,6 +639,7 @@ class SpeechAssistant:
                     beam_size=1,
                     best_of=1,
                     temperature=0.0,
+                    initial_prompt=f"我是助手{self.WAKE_WORD}，请吩咐。", # 引导词
                     condition_on_previous_text=False,
                     no_speech_threshold=0.6
                 )
@@ -634,14 +648,18 @@ class SpeechAssistant:
             except:
                 pass
         
-        # 2. Google fallback
+        # 2. Google fallback (Whisper 失败时的备选)
         if not text:
             try:
                 text = self.r.recognize_google(audio, language="zh-CN")
             except:
                 pass
         
-        return text.strip() if text else None
+        # 清理掉识别结果中的语气词和无意义字符
+        if text:
+            text = re.sub(r'[，。！？、]', '', text).strip()
+            
+        return text if text else None
 
     def run(self):
         """主循环。"""
@@ -675,20 +693,25 @@ class SpeechAssistant:
 
                 # 打断检测与自听过滤
                 if is_playing:
-                    # 模糊匹配唤醒词
+                    # 1. 首先通过长度初步过滤：太短或太长大概率不是打断词
+                    if not text or len(text) < 2 or len(text) > 10:
+                        continue
+
+                    # 2. 模糊匹配唤醒词（增加更多同音/近音词）
                     is_wake = False
-                    if self.WAKE_WORD in text:
-                        is_wake = True
-                    else:
-                        # 同音词模糊匹配
-                        fuzzy_words = ["小本", "校本", "晓笨", "小奔", "笨笨", "小蹦"]
-                        for w in fuzzy_words:
-                            if w in text:
-                                is_wake = True
-                                break
+                    wake_patterns = [
+                        self.WAKE_WORD, "小本", "校本", "晓笨", "小奔", "笨笨", "小蹦", 
+                        "小兵", "小冰", "小斌", "小布", "小博", "小波", "宝贝", "白白"
+                    ]
+                    
+                    # 使用正则或简单的包含检测
+                    for w in wake_patterns:
+                        if w in text:
+                            is_wake = True
+                            break
                     
                     if is_wake:
-                        print(f"⚡️ 触发打断！")
+                        print(f"⚡️ 触发打断！内容: {text}")
                         self._llm_stop_event.set()
                         self.player.stop()
                         self.is_active = True
@@ -697,8 +720,7 @@ class SpeechAssistant:
                         self.player.play_file(self.static_audio_files.get("wake"), blocking=True)
                         continue
                     else:
-                        # 只有听到唤醒词才算打断，否则视为自听（听到自己说话）
-                        # print(f"🔇 忽略自听/背景音: {text}")
+                        # 如果没有匹配到唤醒词，且 AI 正在说话，直接丢弃（视为自听）
                         continue
                 
                 # 非播放状态的处理
