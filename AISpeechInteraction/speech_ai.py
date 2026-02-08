@@ -351,7 +351,7 @@ class AudioPlayer:
         else:
             self._play_thread = t_cons
 
-    def play(self, text, voice="zh-CN-YunxiNeural", blocking=True):
+    def play(self, text, voice="zh-CN-YunyangNeural", blocking=True):
         """流式播放语音。"""
         if not text or not HAS_EDGE_TTS:
             return
@@ -515,7 +515,7 @@ class SpeechAssistant:
         self._llm_stop_event = threading.Event()
         
         # 唤醒词
-        self.WAKE_WORD = "小笨"
+        self.WAKE_WORD = "笨笨"
         
         # 状态
         self.is_active = False
