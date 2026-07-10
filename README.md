@@ -3,7 +3,6 @@
 
 ## 模块概览
 
-- AISpeechInteraction：语音助手模块，负责麦克风录音、语音识别、调用大模型（通义千问）、语音合成与播放，以及必要的视觉识别触发
   - 入口：[speech_ai.py](ArmBasic/AISpeechInteraction/speech_ai.py)
   - 文档：[README.md](ArmBasic/AISpeechInteraction/README.md)
 - FaceRecognitionModule：人脸识别模块，负责从摄像头抓取画面并识别人脸，供语音助手作为上下文使用
