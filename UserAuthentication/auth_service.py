@@ -64,7 +64,7 @@ class AuthService:
             return False, "用户名已存在", None
         except Exception as e:
             session.rollback()
-            return False, f"注册失败: {str(e)}", None
+            return False, "注册失败，请稍后重试", None
         finally:
             session.close()
     
@@ -124,7 +124,8 @@ class AuthService:
                 'expires_in': JWTHandler.ACCESS_TOKEN_EXPIRES
             }
         except Exception as e:
-            return False, f"登录失败: {str(e)}", None
+            session.rollback()
+            return False, "登录失败，请稍后重试", None
         finally:
             session.close()
     

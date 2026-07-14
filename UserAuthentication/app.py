@@ -1,13 +1,32 @@
 """Flask API 路由"""
+import os
 from flask import Flask, request, jsonify
 from functools import wraps
 
 from auth_service import auth_service
+from config import config
+
+
+def validate_production_config():
+    """验证生产环境配置安全性"""
+    errors = []
+    
+    # 检查关键配置项
+    if config.SQLALCHEMY_DATABASE_URI == 'sqlite:///auth.db':
+        errors.append("DATABASE_URL using default SQLite")
+    
+    if errors and os.environ.get('ENV') == 'production':
+        raise RuntimeError(f"Production config errors: {errors}")
+    
+    return errors
 
 
 def create_app():
     """创建 Flask 应用"""
     app = Flask(__name__)
+    
+    # 生产环境配置验证
+    validate_production_config()
     
     # 注册路由
     app.route('/api/auth/register', methods=['POST'])(register)

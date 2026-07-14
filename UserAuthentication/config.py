@@ -6,7 +6,12 @@ class Config:
     # JWT 配置
     SECRET_KEY = os.environ.get('AUTH_SECRET_KEY')
     if SECRET_KEY is None:
-        raise RuntimeError('AUTH_SECRET_KEY environment variable is required in production')
+        if os.environ.get('ENV') == 'production':
+            raise RuntimeError('AUTH_SECRET_KEY environment variable is required in production')
+        # 开发环境使用默认密钥（仅用于开发测试）
+        import warnings
+        warnings.warn("Using default SECRET_KEY. This is insecure for production!")
+        SECRET_KEY = 'dev-secret-key-change-in-production'
     JWT_ALGORITHM = 'HS256'
     JWT_ACCESS_TOKEN_EXPIRES = int(os.environ.get('AUTH_TOKEN_EXPIRE_HOURS', 24))
     JWT_REFRESH_TOKEN_EXPIRES = int(os.environ.get('AUTH_REFRESH_TOKEN_DAYS', 7))
@@ -28,5 +33,10 @@ class Config:
     
     # 密码加密配置
     BCRYPT_ROUNDS = 12
+    
+    # HTTPS 安全配置（生产环境应启用）
+    SESSION_COOKIE_SECURE = os.environ.get('HTTPS_ENABLED', 'false').lower() == 'true'
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
 
 config = Config()
