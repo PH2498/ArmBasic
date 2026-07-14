@@ -1,22 +1,68 @@
-# 代码评审报告（复核版）
+# 代码评审报告
 
 **项目**: 用户登录功能  
 **评审日期**: 2026-07-14  
 **评审范围**: UserAuthentication 模块  
 **评审类型**: 安全性/代码质量/架构  
-**评审状态**: ✅ 已修复
+**评审状态**: ❌ 存在 Blocker
 
 ---
 
 ## 1. 评审摘要
 
-| 指标 | 原始结果 | 修复后结果 |
-|------|----------|------------|
-| **Blocker 数量** | **2** | **0** ✅ |
-| Critical 数量 | 3 | 1 |
-| Warning 数量 | 5 | 5 |
-| Info 数量 | 4 | 4 |
-| **总体评价** | 需修复后合并 | ✅ 可合并 |
+| 级别 | 数量 |
+|------|------|
+| **Blocker** | **1** ❌ |
+| Critical | 2 |
+| Major | 2 |
+| Minor | 2 |
+| **总体评价** | ❌ 不通过 - 必须修复 Blocker |
+
+---
+
+## 2. 🔴 Blocker 问题
+
+### B-001: AuthService.login_attempts 属性未初始化导致运行时错误
+
+**文件**: `UserAuthentication/auth_service.py`  
+**严重级别**: Blocker  
+**问题描述**:  
+`AuthService` 类的 `__init__` 方法（第18-20行）为空，注释声称"登录失败计数已迁移至数据库持久化"，但实际代码中仍大量使用 `self.login_attempts` 字典：
+- 第112行：`if attempt_key in self.login_attempts:`
+- 第319行：`if key not in self.login_attempts:`
+
+**影响**: 登录流程将触发 `AttributeError: 'AuthService' object has no attribute 'login_attempts'`
+
+**建议修复**:
+```python
+def __init__(self):
+    self.login_attempts = {}
+```
+
+---
+
+## 3. 🟠 Critical 问题
+
+### C-001: Token 黑名单缺少过期清理机制
+
+**文件**: `UserAuthentication/user_model.py`  
+**问题**: `TokenBlacklist.expires_at` 字段未使用，长期运行将导致表无限增长。
+
+### C-002: 密码加密配置重复定义
+
+**文件**: `UserAuthentication/config.py`  
+**问题**: `BCRYPT_COST_FACTOR` 和 `BCRYPT_ROUNDS` 重复定义，应统一。
+
+---
+
+## 4. ✅ 修复建议
+
+1. **必须修复**: B-001（阻塞发布）
+2. **建议修复**: C-001, C-002
+
+---
+
+**评审结论**: ❌ **不通过** - 存在 1 个 Blocker，必须修复后方可合并。
 
 ---
 
