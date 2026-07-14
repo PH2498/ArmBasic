@@ -23,5 +23,8 @@ class Config:
     # 登录限制
     MAX_LOGIN_ATTEMPTS = 5
     LOGIN_LOCKOUT_MINUTES = 15
+    
+    # 密码加密配置
+    BCRYPT_ROUNDS = 12
 
 config = Config()
