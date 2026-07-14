@@ -1,0 +1,12 @@
+{
+  "blocker_count": 3,
+  "review_summary": {
+    "total_issues": 12,
+    "blocker": 3,
+    "critical": 2,
+    "major": 4,
+    "minor": 3
+  },
+  "review_status": "需要修改后合并",
+  "review_date": "2026-07-14T01:55:05Z"
+}
