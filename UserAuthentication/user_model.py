@@ -30,6 +30,21 @@ class TokenBlacklist(Base):
     revoked_at = Column(DateTime, default=datetime.utcnow)
     expires_at = Column(DateTime, nullable=True)  # Token 过期时间，用于清理机制
 
+
+class LoginAttempt(Base):
+    """登录失败记录表 - 支持多进程/分布式环境"""
+    __tablename__ = 'login_attempts'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(String(50), nullable=False, index=True)
+    attempt_count = Column(Integer, default=0, nullable=False)
+    first_attempt_at = Column(DateTime, nullable=True)
+    locked_at = Column(DateTime, nullable=True)
+    lockout_duration_minutes = Column(Integer, nullable=True)
+    
+    def __repr__(self):
+        return f'<LoginAttempt {self.username}: {self.attempt_count} attempts>'
+
 # 数据库引擎和会话
 _engine = None
 _Session = None

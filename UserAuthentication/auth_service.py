@@ -6,7 +6,7 @@ import bcrypt
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, Tuple
 from sqlalchemy.exc import IntegrityError
-from .user_model import User, TokenBlacklist, get_session
+from .user_model import User, TokenBlacklist, LoginAttempt, get_session
 from .utils.jwt_handler import JWTHandler
 from .utils.validators import InputValidator
 from .config import Config
@@ -16,8 +16,8 @@ class AuthService:
     """认证服务类"""
     
     def __init__(self):
-        # 登录失败计数已迁移至数据库持久化，支持多进程环境
-        self.login_attempts = {}
+        """初始化认证服务 - 登录失败计数通过数据库持久化"""
+        pass
     
     def register_user(self, username: str, password: str) -> Tuple[bool, str, Optional[Dict]]:
         """用户注册
@@ -86,8 +86,7 @@ class AuthService:
         username = InputValidator.sanitize_input(username)
         
         # 检查登录锁定
-        lockout_key = f"lockout_{username}"
-        if self._is_locked_out(lockout_key):
+        if self._is_locked_out(username):
             return False, "账户已被锁定，请15分钟后再试", None
         
         # 查询用户
@@ -107,10 +106,8 @@ class AuthService:
                 self._record_login_attempt(username)
                 return False, "用户名或密码错误", None
             
-            # 清除登录失败记录
-            attempt_key = f"attempts_{username}"
-            if attempt_key in self.login_attempts:
-                del self.login_attempts[attempt_key]
+            # 登录成功，清除登录失败记录
+            self._clear_login_attempts(username)
             
             # 生成 Token
             access_token = JWTHandler.generate_access_token(user.id, user.username)
@@ -310,47 +307,98 @@ class AuthService:
             return False
     
     def _record_login_attempt(self, username: str):
-        """记录登录失败次数
+        """记录登录失败次数到数据库
         
         Args:
             username: 用户名
         """
-        key = f"attempts_{username}"
-        if key not in self.login_attempts:
-            self.login_attempts[key] = {'count': 0, 'first_attempt': datetime.utcnow()}
-        
-        self.login_attempts[key]['count'] += 1
-        
-        # 达到最大失败次数，锁定账户
-        if self.login_attempts[key]['count'] >= Config.MAX_LOGIN_ATTEMPTS:
-            lockout_key = f"lockout_{username}"
-            self.login_attempts[lockout_key] = {
-                'locked_at': datetime.utcnow(),
-                'duration': timedelta(minutes=Config.LOGIN_LOCKOUT_MINUTES)
-            }
+        session = get_session()
+        try:
+            # 查询或创建登录失败记录
+            attempt = session.query(LoginAttempt).filter(
+                LoginAttempt.username == username
+            ).first()
+            
+            if not attempt:
+                attempt = LoginAttempt(
+                    username=username,
+                    attempt_count=0,
+                    first_attempt_at=datetime.utcnow()
+                )
+                session.add(attempt)
+            
+            attempt.attempt_count += 1
+            
+            # 达到最大失败次数，锁定账户
+            if attempt.attempt_count >= Config.MAX_LOGIN_ATTEMPTS:
+                attempt.locked_at = datetime.utcnow()
+                attempt.lockout_duration_minutes = Config.LOGIN_LOCKOUT_MINUTES
+            
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
     
-    def _is_locked_out(self, lockout_key: str) -> bool:
-        """检查账户是否被锁定
+    def _is_locked_out(self, username: str) -> bool:
+        """检查账户是否被锁定（从数据库查询）
         
         Args:
-            lockout_key: 锁定键
+            username: 用户名
             
         Returns:
             是否被锁定
         """
-        if lockout_key not in self.login_attempts:
+        session = get_session()
+        try:
+            attempt = session.query(LoginAttempt).filter(
+                LoginAttempt.username == username
+            ).first()
+            
+            if not attempt or not attempt.locked_at:
+                return False
+            
+            # 检查锁定期是否已过
+            locked_at = attempt.locked_at
+            duration = timedelta(minutes=attempt.lockout_duration_minutes or Config.LOGIN_LOCKOUT_MINUTES)
+            
+            if datetime.utcnow() < locked_at + duration:
+                return True
+            
+            # 锁定期已过，清除锁定状态和失败计数
+            attempt.locked_at = None
+            attempt.attempt_count = 0
+            attempt.first_attempt_at = None
+            attempt.lockout_duration_minutes = None
+            session.commit()
+            
             return False
+        except Exception:
+            session.rollback()
+            return False
+        finally:
+            session.close()
+    
+    def _clear_login_attempts(self, username: str):
+        """清除登录失败记录
         
-        lockout_info = self.login_attempts[lockout_key]
-        locked_at = lockout_info.get('locked_at')
-        duration = lockout_info.get('duration', timedelta(minutes=15))
-        
-        if locked_at and datetime.utcnow() < locked_at + duration:
-            return True
-        
-        # 锁定期已过，清除锁定记录
-        del self.login_attempts[lockout_key]
-        return False
+        Args:
+            username: 用户名
+        """
+        session = get_session()
+        try:
+            attempt = session.query(LoginAttempt).filter(
+                LoginAttempt.username == username
+            ).first()
+            
+            if attempt:
+                session.delete(attempt)
+                session.commit()
+        except Exception:
+            session.rollback()
+        finally:
+            session.close()
 
 
 # 单例服务实例
