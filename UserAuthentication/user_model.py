@@ -26,8 +26,9 @@ class TokenBlacklist(Base):
     __tablename__ = 'token_blacklist'
     
     id = Column(Integer, primary_key=True, autoincrement=True)
-    token_jti = Column(String(64), unique=True, nullable=True)
+    token_jti = Column(String(64), unique=True, nullable=False)
     revoked_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=True)  # Token 过期时间，用于清理机制
 
 # 数据库引擎和会话
 _engine = None
@@ -36,7 +37,13 @@ _Session = None
 def init_db(db_url='sqlite:///auth.db'):
     """初始化数据库"""
     global _engine, _Session
-    _engine = create_engine(db_url, echo=False)
+    _engine = create_engine(
+        db_url, 
+        echo=False,
+        pool_size=10,
+        max_overflow=20,
+        pool_pre_ping=True
+    )
     _Session = sessionmaker(bind=_engine)
     Base.metadata.create_all(_engine)
     return _engine

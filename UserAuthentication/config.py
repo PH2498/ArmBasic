@@ -4,7 +4,9 @@ from datetime import timedelta
 
 class Config:
     # JWT 配置
-    SECRET_KEY = os.environ.get('AUTH_SECRET_KEY', 'dev-secret-key-change-in-production')
+    SECRET_KEY = os.environ.get('AUTH_SECRET_KEY')
+    if SECRET_KEY is None:
+        raise RuntimeError('AUTH_SECRET_KEY environment variable is required in production')
     JWT_ALGORITHM = 'HS256'
     JWT_ACCESS_TOKEN_EXPIRES = int(os.environ.get('AUTH_TOKEN_EXPIRE_HOURS', 24))
     JWT_REFRESH_TOKEN_EXPIRES = int(os.environ.get('AUTH_REFRESH_TOKEN_DAYS', 7))

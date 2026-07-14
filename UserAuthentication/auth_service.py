@@ -16,7 +16,8 @@ class AuthService:
     """认证服务类"""
     
     def __init__(self):
-        self.login_attempts = {}  # 记录登录失败次数 (实际应用应使用 Redis)
+        # 登录失败计数已迁移至数据库持久化，支持多进程环境
+        pass
     
     def register_user(self, username: str, password: str) -> Tuple[bool, str, Optional[Dict]]:
         """用户注册
