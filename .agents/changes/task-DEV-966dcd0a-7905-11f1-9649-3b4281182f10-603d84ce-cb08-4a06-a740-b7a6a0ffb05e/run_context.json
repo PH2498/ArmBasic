@@ -1,0 +1,18 @@
+{
+  "task_id": "task-DEV-966dcd0a-7905-11f1-9649-3b4281182f10-603d84ce-cb08-4a06-a740-b7a6a0ffb05e",
+  "stage": "review",
+  "node": "代码评审",
+  "skill": "dtazziboot-java-code-review",
+  "blocker_count": 0,
+  "cr_report_path": ".agents/20260727-实现堆排序/cr_report.md",
+  "scan_summary": {
+    "rules_scanned": "52/222",
+    "raw_findings": 3,
+    "p0": 0,
+    "p1": 0,
+    "p2": 1,
+    "notes": "scan-all-rules.sh 命中 3 处 G16.2(CatchWithoutLogging)，均位于 HeapSortTest.java 测试异常断言，经 LLM 复核为误报并降级 N/A，不计入 blocker；主源码 HeapSort.java 无任何命中。"
+  },
+  "verdict": "通过",
+  "review_date": "2026-07-27"
+}
