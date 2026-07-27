@@ -8,7 +8,7 @@ import java.util.Comparator;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 /**
  * {@link HeapSort} 单元测试，覆盖正常、边界、异常、比较器场景。
@@ -90,34 +90,25 @@ public class HeapSortTest {
     /** 异常：null 数组抛 IllegalArgumentException。 */
     @Test
     public void testSortNullArrayThrows() {
-        try {
-            HeapSort.sort((Integer[]) null);
-            fail("expected IllegalArgumentException for null array");
-        } catch (IllegalArgumentException e) {
-            assertEquals("array must not be null", e.getMessage());
-        }
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> HeapSort.sort((Integer[]) null));
+        assertEquals("array must not be null", e.getMessage());
     }
 
     /** 异常：comparator 为 null 抛 IllegalArgumentException。 */
     @Test
     public void testSortNullComparatorThrows() {
-        try {
-            HeapSort.sort(new Integer[]{1, 2, 3}, null);
-            fail("expected IllegalArgumentException for null comparator");
-        } catch (IllegalArgumentException e) {
-            assertEquals("comparator must not be null", e.getMessage());
-        }
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> HeapSort.sort(new Integer[]{1, 2, 3}, null));
+        assertEquals("comparator must not be null", e.getMessage());
     }
 
     /** 异常：自然序重载下 null 数组抛 IllegalArgumentException。 */
     @Test
     public void testSortComparatorNullArrayThrows() {
-        try {
-            HeapSort.sort((Integer[]) null, Comparator.naturalOrder());
-            fail("expected IllegalArgumentException for null array");
-        } catch (IllegalArgumentException e) {
-            assertEquals("array must not be null", e.getMessage());
-        }
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> HeapSort.sort((Integer[]) null, Comparator.naturalOrder()));
+        assertEquals("array must not be null", e.getMessage());
     }
 
     /** 比较器场景：降序排序（reverseOrder）。 */
