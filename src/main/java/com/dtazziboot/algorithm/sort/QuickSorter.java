@@ -99,10 +99,11 @@ public final class QuickSorter {
     @SuppressWarnings("unchecked")
     private static <T> int partition(T[] array, int low, int high) {
         T pivot = array[high];
+        // R02：若 pivot 为 null，此处 compareTo 将抛出 NullPointerException
+        Comparable<? super T> comparablePivot = (Comparable<? super T>) pivot;
         int i = low - 1;
 
         for (int j = low; j < high; j++) {
-            Comparable<? super T> comparablePivot = (Comparable<? super T>) pivot;
             // R02：若 array[j] 为 null，此处 compareTo 将抛出 NullPointerException
             if (comparablePivot.compareTo(array[j]) > 0) {
                 i++;
@@ -130,19 +131,18 @@ public final class QuickSorter {
     private static <T> void choosePivot(T[] array, int low, int high) {
         int mid = low + (high - low) / 2;
 
-        // 比较 low 与 mid，保证 array[low] <= array[mid]
+        // 三数排序：经三次比较与交换，保证 array[low] <= array[mid] <= array[high]
         if (compareAt(array, low, mid) > 0) {
             swap(array, low, mid);
         }
-        // 比较 low 与 high，保证 array[low] <= array[high]
         if (compareAt(array, low, high) > 0) {
             swap(array, low, high);
         }
-        // 此时 array[low] 为三者最小值；再令 array[mid] 与 array[high] 比较，
-        // 将中值换至 high 端点作为基准
         if (compareAt(array, mid, high) > 0) {
             swap(array, mid, high);
         }
+        // 此时中值位于 mid，将其换至 high 端点作为 Lomuto 分区基准
+        swap(array, mid, high);
     }
 
     /**
