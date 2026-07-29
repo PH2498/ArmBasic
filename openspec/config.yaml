@@ -1,0 +1,5 @@
+context: ArmBasic
+description: |
+  ArmBasic 仓库 OpenSpec 上下文。仓库为 Python 项目，
+  含 AISpeechInteraction（语音助手）与 FaceRecognitionModule（人脸识别）两个模块。
+  本上下文用于承载测试报告 Skill 的变更规划。
