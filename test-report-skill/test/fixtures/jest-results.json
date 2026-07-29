@@ -1,0 +1,23 @@
+{
+  "numTotalTestSuites": 1,
+  "numPassedTestSuites": 0,
+  "numFailedTestSuites": 1,
+  "numTotalTests": 3,
+  "numPassedTests": 2,
+  "numFailedTests": 1,
+  "numSkippedTests": 0,
+  "testResults": [
+    {
+      "name": "/src/add.test.js",
+      "status": "failed",
+      "startTime": 1700000000000,
+      "endTime": 1700000001000,
+      "assertionResults": [
+        { "title": "adds 1+1", "fullName": "adds 1+1", "status": "passed", "duration": 5 },
+        { "title": "adds 2+2", "fullName": "adds 2+2", "status": "passed", "duration": 4 },
+        { "title": "fails with Bearer token", "fullName": "fails with Bearer token", "status": "failed", "duration": 10,
+          "failureMessages": ["Error: expected 5 to be 4\n    at Object.<anonymous> (/src/add.test.js:12:18)\n    at Bearer eyJhbGciOiJIUzI1\npassword=secret123"] }
+      ]
+    }
+  ]
+}

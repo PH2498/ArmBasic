@@ -1,0 +1,60 @@
+# 测试报告
+
+## 1. 报告头
+
+- 项目名：{{projectName}}
+- 生成时间：{{generatedAt}}
+- 执行命令：{{command}}
+- 测试框架：{{framework}}
+- 框架版本：{{frameworkVersion}}
+- 执行环境：{{envSummary}}
+
+## 2. 结果摘要
+
+- 用例总数：{{total}}
+- 通过：{{passed}}
+- 失败：{{failed}}
+- 跳过：{{skipped}}
+- 通过率：{{passRate}}
+- 总耗时：{{durationMs}}
+- 整体结论：{{conclusion}}
+
+{{#if hasFailures}}
+## 3. 失败用例分析
+
+{{#each failures}}
+### {{name}}
+
+- 所属文件：{{filePath}}
+- 错误信息：{{errorMessage}}
+{{/each}}
+{{/if}}
+
+## {{detailSection}}. 用例明细
+
+{{#each details.groupedByFile}}
+### {{filePath}}
+
+| 用例 | 耗时 | 状态 |
+|---|---|---|
+{{#each cases}}| {{name}} | {{durationMs}} | {{status}} |
+{{/each}}
+{{/each}}
+
+## {{coverageSection}}. 覆盖率
+
+{{#if coverage}}
+| 指标 | 覆盖率 |
+|---|---|
+| 语句 | {{coverage.statements}} |
+| 分支 | {{coverage.branches}} |
+| 函数 | {{coverage.functions}} |
+| 行 | {{coverage.lines}} |
+{{else}}
+> 未获取
+{{/if}}
+
+## {{appendixSection}}. 附录
+
+- 原始结果文件：{{appendix.sourceResultPath}}
+- 生成工具：{{appendix.toolVersion}}

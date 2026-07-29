@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="suite.calc" tests="4" failures="1" errors="0" skipped="1" time="0.15">
+    <testcase classname="calc.test" name="adds numbers" time="0.05" />
+    <testcase classname="calc.test" name="subtracts numbers" time="0.04" />
+    <testcase classname="calc.test" name="fails on purpose" time="0.06">
+      <failure type="AssertionError">AssertionError: expected 5 to equal 4
+    at /src/calc.test.js:24:18
+    at Object.&lt;anonymous&gt;</failure>
+    </testcase>
+    <testcase classname="calc.test" name="skipped case" time="0">
+      <skipped />
+    </testcase>
+  </testsuite>
+</testsuites>
