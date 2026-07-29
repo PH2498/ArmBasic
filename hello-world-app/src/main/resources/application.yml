@@ -1,0 +1,27 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: hello-world-app
+  jackson:
+    default-property-inclusion: non_null
+
+# Greeting 问候模块配置
+greeting:
+  # 应急开关：false 时接口返回维护提示
+  enabled: true
+  # 问候语内容
+  message: "Hello, World!"
+
+# 监控埋点
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
