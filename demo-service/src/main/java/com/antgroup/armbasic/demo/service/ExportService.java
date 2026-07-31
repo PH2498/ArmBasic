@@ -15,7 +15,10 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 导出服务（内部接口 S03）。
@@ -23,6 +26,8 @@ import java.util.List;
  * byte[] export(String tab, String format)
  * R04 tab 枚举校验；R05 format 不支持时回退 csv。
  * hello 导出文案，hash 导出原文+摘要，sort 导出原数组+排序结果+交换次数。
+ * <p>
+ * A8.3 改进：导出数据通过动态调用 DemoService 获取真实计算结果，不再使用硬编码样例字符串。
  */
 @Slf4j
 @Service
@@ -81,17 +86,27 @@ public class ExportService {
             switch (tab) {
                 case "hello":
                     writer.write("message\r\n");
-                    writer.write("HelloWorld\r\n");
+                    writer.write(DemoConstants.HELLO_WORLD_MESSAGE + "\r\n");
                     break;
-                case "sort":
+                case "sort": {
+                    // A8.3: 动态调用 DemoService 获取真实排序结果
+                    List<Integer> sampleItems = Arrays.stream(DemoConstants.EXPORT_SAMPLE_SORT_ITEMS)
+                            .boxed().collect(Collectors.toList());
+                    SortResult sortResult = demoService.bubbleSort(sampleItems);
                     writer.write("原数组,排序结果,交换次数\r\n");
-                    writer.write("[5,3,8,1,2],[1,2,3,5,8],6\r\n");
+                    writer.write(Arrays.toString(DemoConstants.EXPORT_SAMPLE_SORT_ITEMS) + ","
+                            + sortResult.getSorted() + "," + sortResult.getSwapCount() + "\r\n");
                     break;
+                }
                 case "hash":
-                default:
+                default: {
+                    // A8.3: 动态调用 DemoService 获取真实哈希结果
+                    String[] hashResult = demoService.hash(
+                            DemoConstants.EXPORT_SAMPLE_RAW, DemoConstants.EXPORT_SAMPLE_ALGORITHM);
                     writer.write("raw,algorithm,digest\r\n");
-                    writer.write("hello,sha256,2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824\r\n");
+                    writer.write(DemoConstants.EXPORT_SAMPLE_RAW + "," + hashResult[0] + "," + hashResult[1] + "\r\n");
                     break;
+                }
             }
             writer.flush();
         } catch (IOException e) {
@@ -113,30 +128,37 @@ public class ExportService {
                     Row header = sheet.createRow(0);
                     header.createCell(0).setCellValue("message");
                     Row data = sheet.createRow(1);
-                    data.createCell(0).setCellValue("HelloWorld");
+                    data.createCell(0).setCellValue(DemoConstants.HELLO_WORLD_MESSAGE);
                     break;
                 }
                 case "sort": {
+                    // A8.3: 动态调用 DemoService 获取真实排序结果
+                    List<Integer> sampleItems = Arrays.stream(DemoConstants.EXPORT_SAMPLE_SORT_ITEMS)
+                            .boxed().collect(Collectors.toList());
+                    SortResult sortResult = demoService.bubbleSort(sampleItems);
                     Row header = sheet.createRow(0);
                     header.createCell(0).setCellValue("原数组");
                     header.createCell(1).setCellValue("排序结果");
                     header.createCell(2).setCellValue("交换次数");
                     Row data = sheet.createRow(1);
-                    data.createCell(0).setCellValue("[5,3,8,1,2]");
-                    data.createCell(1).setCellValue("[1,2,3,5,8]");
-                    data.createCell(2).setCellValue(6);
+                    data.createCell(0).setCellValue(Arrays.toString(DemoConstants.EXPORT_SAMPLE_SORT_ITEMS));
+                    data.createCell(1).setCellValue(sortResult.getSorted().toString());
+                    data.createCell(2).setCellValue(sortResult.getSwapCount());
                     break;
                 }
                 case "hash":
                 default: {
+                    // A8.3: 动态调用 DemoService 获取真实哈希结果
+                    String[] hashResult = demoService.hash(
+                            DemoConstants.EXPORT_SAMPLE_RAW, DemoConstants.EXPORT_SAMPLE_ALGORITHM);
                     Row header = sheet.createRow(0);
                     header.createCell(0).setCellValue("raw");
                     header.createCell(1).setCellValue("algorithm");
                     header.createCell(2).setCellValue("digest");
                     Row data = sheet.createRow(1);
-                    data.createCell(0).setCellValue("hello");
-                    data.createCell(1).setCellValue("sha256");
-                    data.createCell(2).setCellValue("2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824");
+                    data.createCell(0).setCellValue(DemoConstants.EXPORT_SAMPLE_RAW);
+                    data.createCell(1).setCellValue(hashResult[0]);
+                    data.createCell(2).setCellValue(hashResult[1]);
                     break;
                 }
             }

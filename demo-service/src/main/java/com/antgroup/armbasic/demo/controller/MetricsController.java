@@ -3,6 +3,7 @@ package com.antgroup.armbasic.demo.controller;
 import com.antgroup.armbasic.demo.metrics.MetricsService;
 import com.antgroup.armbasic.demo.model.ApiResult;
 import com.antgroup.armbasic.demo.model.DemoConstants;
+import com.antgroup.armbasic.demo.model.DemoException;
 import com.antgroup.armbasic.demo.model.StatsResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,16 +36,13 @@ public class MetricsController {
         try {
             StatsResult result = metricsService.aggregate(dimension, chartType);
             return ApiResult.ok(result);
+        } catch (DemoException e) {
+            // A6.2: 通过自定义异常的 errorCode 字段区分，不再使用字符串比较
+            log.warn("callStats failed, illegal argument: dimension={}, chartType={}", dimension, chartType, e);
+            return ApiResult.fail(e.getErrorCode());
         } catch (IllegalArgumentException e) {
             log.warn("callStats failed, illegal argument: dimension={}, chartType={}", dimension, chartType, e);
-            String msg = e.getMessage();
-            // 区分 METRICS_001 / METRICS_002
-            if (DemoConstants.METRICS_001.equals(msg)) {
-                return ApiResult.fail(DemoConstants.METRICS_001);
-            } else if (DemoConstants.METRICS_002.equals(msg)) {
-                return ApiResult.fail(DemoConstants.METRICS_002);
-            }
-            return ApiResult.fail(msg);
+            return ApiResult.fail(e.getMessage());
         } catch (Exception e) {
             log.error("callStats failed, unexpected error: dimension={}, chartType={}", dimension, chartType, e);
             return ApiResult.fail(DemoConstants.DEMO_001);

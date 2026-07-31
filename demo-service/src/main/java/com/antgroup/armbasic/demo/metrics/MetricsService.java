@@ -2,6 +2,7 @@ package com.antgroup.armbasic.demo.metrics;
 
 import com.antgroup.armbasic.demo.model.CallRecord;
 import com.antgroup.armbasic.demo.model.DemoConstants;
+import com.antgroup.armbasic.demo.model.DemoException;
 import com.antgroup.armbasic.demo.model.StatsResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -42,10 +43,10 @@ public class MetricsService {
     public StatsResult aggregate(String dimension, String chartType) {
         // R06 枚举校验
         if (!DemoConstants.inEnum(dimension, DemoConstants.DIMENSIONS)) {
-            throw new IllegalArgumentException(DemoConstants.METRICS_001);
+            throw new DemoException(DemoConstants.METRICS_001);
         }
         if (!DemoConstants.inEnum(chartType, DemoConstants.CHART_TYPES)) {
-            throw new IllegalArgumentException(DemoConstants.METRICS_002);
+            throw new DemoException(DemoConstants.METRICS_002);
         }
 
         List<CallRecord> records = metricsStore.findAll();

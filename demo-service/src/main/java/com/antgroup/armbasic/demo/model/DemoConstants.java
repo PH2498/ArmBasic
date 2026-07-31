@@ -39,6 +39,11 @@ public final class DemoConstants {
     /** CSV Content-Type */
     public static final String CSV_CONTENT_TYPE = "text/csv";
 
+    /** 导出样例数据（A8.3: 消除魔法值，统一管理导出样例输入） */
+    public static final String EXPORT_SAMPLE_RAW = "hello";
+    public static final String EXPORT_SAMPLE_ALGORITHM = "sha256";
+    public static final int[] EXPORT_SAMPLE_SORT_ITEMS = {5, 3, 8, 1, 2};
+
     /** 统一时区 */
     public static final String ZONE_ID = "Asia/Shanghai";
 

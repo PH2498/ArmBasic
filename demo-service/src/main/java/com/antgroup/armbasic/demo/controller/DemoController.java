@@ -26,6 +26,9 @@ import java.util.Map;
 
 /**
  * DemoController — 承载 W01~W04 四个接口。
+ * <p>
+ * 代码注释中的 R 编号（R01~R06）来源于系统设计文档 .agents/system.changes/design.md 的校验规则章节，
+ * 其中 R01~R03 为 demo 接口校验规则，R04~R05 为导出校验规则，R06 为统计校验规则。
  */
 @Slf4j
 @RestController
