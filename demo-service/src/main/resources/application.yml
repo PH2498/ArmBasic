@@ -1,0 +1,21 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: demo-service
+  servlet:
+    # MetricsFilter 拦截 /api/demo/** 写入埋点
+    multipart:
+      max-file-size: 10MB
+
+# Demo 服务自定义配置
+demo:
+  metrics:
+    # 埋点存储: memory（MVP 内存 ConcurrentLinkedQueue）
+    storage: memory
+  caller:
+    # 调用人身份来源: header（从请求头 X-Caller-Id 读取，缺失则 mock 池轮询）
+    source: header
