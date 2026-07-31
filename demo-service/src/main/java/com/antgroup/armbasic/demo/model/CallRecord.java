@@ -1,6 +1,7 @@
 package com.antgroup.armbasic.demo.model;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 /**
  * 接口调用埋点记录。
@@ -20,7 +21,7 @@ public class CallRecord {
     private LocalDateTime gmtCreate;
 
     public CallRecord() {
-        this.gmtCreate = LocalDateTime.now();
+        this.gmtCreate = LocalDateTime.now(ZoneId.of(DemoConstants.ZONE_ID));
     }
 
     public Long getId() { return id; }

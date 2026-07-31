@@ -9,6 +9,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +21,7 @@ import java.io.IOException;
  * 拦截 /api/demo/** 写入埋点记录。
  * 统计接口 /api/metrics/** 不埋点（避免自递归）。
  */
+@Slf4j
 @Component
 public class MetricsFilter implements Filter {
 
@@ -59,8 +61,8 @@ public class MetricsFilter implements Filter {
             metricsService.record(record);
         } catch (Exception e) {
             // 埋点失败不影响主流程
-            // 仅记录日志，不记录请求原文（hash raw 可能为敏感输入）
-            // 生产环境应使用日志框架：log.warn("metrics record failed", e);
+            // 不记录请求原文（hash raw 可能为敏感输入），仅记录异常
+            log.warn("metrics record failed", e);
         }
     }
 }

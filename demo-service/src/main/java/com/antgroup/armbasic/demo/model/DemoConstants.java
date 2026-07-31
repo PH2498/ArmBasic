@@ -30,6 +30,18 @@ public final class DemoConstants {
     /** 调用人请求头 */
     public static final String CALLER_HEADER = "X-Caller-Id";
 
+    /** HelloWorld 固定文案 */
+    public static final String HELLO_WORLD_MESSAGE = "HelloWorld";
+
+    /** XLSX Content-Type */
+    public static final String XLSX_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+    /** CSV Content-Type */
+    public static final String CSV_CONTENT_TYPE = "text/csv";
+
+    /** 统一时区 */
+    public static final String ZONE_ID = "Asia/Shanghai";
+
     // ---- 错误码 ----
     public static final String DEMO_001 = "DEMO_001"; // 服务内部异常
     public static final String DEMO_002 = "DEMO_002"; // raw 为空

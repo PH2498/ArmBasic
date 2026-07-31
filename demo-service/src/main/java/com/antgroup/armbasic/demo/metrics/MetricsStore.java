@@ -1,8 +1,11 @@
 package com.antgroup.armbasic.demo.metrics;
 
 import com.antgroup.armbasic.demo.model.CallRecord;
+import com.antgroup.armbasic.demo.model.DemoConstants;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -25,7 +28,7 @@ public class MetricsStore {
     public void record(CallRecord record) {
         record.setId(idSeq.incrementAndGet());
         if (record.getCallTime() == null) {
-            record.setCallTime(java.time.LocalDateTime.now());
+            record.setCallTime(LocalDateTime.now(ZoneId.of(DemoConstants.ZONE_ID)));
         }
         store.add(record);
     }

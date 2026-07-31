@@ -2,6 +2,7 @@ package com.antgroup.armbasic.demo.service;
 
 import com.antgroup.armbasic.demo.model.DemoConstants;
 import com.antgroup.armbasic.demo.model.SortResult;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.security.MessageDigest;
@@ -17,6 +18,7 @@ import java.util.List;
  * S01: String hash(String raw, String algorithm)
  * S02: SortResult bubbleSort(List<Integer> items)
  */
+@Slf4j
 @Service
 public class DemoService {
 
@@ -47,6 +49,7 @@ public class DemoService {
             String hex = HexFormat.of().formatHex(digest);
             return new String[]{actualAlgorithm, hex};
         } catch (NoSuchAlgorithmException e) {
+            log.error("hash failed, unsupported algorithm: {}", actualAlgorithm, e);
             throw new RuntimeException(DemoConstants.DEMO_001, e);
         }
     }

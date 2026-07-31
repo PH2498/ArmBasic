@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -84,7 +85,7 @@ public class MetricsService {
         for (CallRecord r : records) {
             String day = r.getCallTime() != null
                     ? r.getCallTime().toLocalDate().format(fmt)
-                    : LocalDate.now().format(fmt);
+                    : LocalDate.now(ZoneId.of(DemoConstants.ZONE_ID)).format(fmt);
             counts.merge(day, 1L, Long::sum);
         }
         return counts.entrySet().stream()

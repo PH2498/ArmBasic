@@ -39,7 +39,8 @@ public class PersonMetaRepository {
             return mockPool.get(callerId);
         }
         // 缺失时轮询分配一个 mock 人员（A08 假设）
-        int idx = callerId == null ? 0 : Math.abs(callerId.hashCode()) % mockPool.size();
+        // 使用位掩码避免 Math.abs(Integer.MIN_VALUE) 返回负数导致数组越界（B029 修复）
+        int idx = callerId == null ? 0 : (callerId.hashCode() & 0x7fffffff) % mockPool.size();
         String key = (String) mockPool.keySet().toArray()[idx];
         return mockPool.get(key);
     }

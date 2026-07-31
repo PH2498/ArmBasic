@@ -6,6 +6,7 @@ import com.antgroup.armbasic.demo.model.SortResult;
 import com.antgroup.armbasic.demo.service.DemoService;
 import com.antgroup.armbasic.demo.service.ExportService;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -26,6 +27,7 @@ import java.util.Map;
 /**
  * DemoController — 承载 W01~W04 四个接口。
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/demo")
 public class DemoController {
@@ -43,7 +45,7 @@ public class DemoController {
     @GetMapping("/hello")
     public ApiResult<Map<String, String>> hello() {
         Map<String, String> data = new HashMap<>();
-        data.put("message", "HelloWorld");
+        data.put("message", DemoConstants.HELLO_WORLD_MESSAGE);
         return ApiResult.ok(data);
     }
 
@@ -63,8 +65,10 @@ public class DemoController {
             data.put("digest", result[1]);
             return ApiResult.ok(data);
         } catch (IllegalArgumentException e) {
+            log.warn("hash failed, illegal argument", e);
             return ApiResult.fail(e.getMessage());
         } catch (Exception e) {
+            log.error("hash failed, unexpected error", e);
             return ApiResult.fail(DemoConstants.DEMO_001);
         }
     }
@@ -81,8 +85,10 @@ public class DemoController {
             SortResult result = demoService.bubbleSort(items);
             return ApiResult.ok(result);
         } catch (IllegalArgumentException e) {
+            log.warn("sort failed, illegal argument", e);
             return ApiResult.fail(e.getMessage());
         } catch (Exception e) {
+            log.error("sort failed, unexpected error", e);
             return ApiResult.fail(DemoConstants.DEMO_001);
         }
     }
@@ -111,17 +117,23 @@ public class DemoController {
                 os.flush();
             }
         } catch (IllegalArgumentException e) {
+            log.warn("export failed, illegal argument", e);
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             try (OutputStream os = response.getOutputStream()) {
                 os.write(ApiResult.fail(e.getMessage() != null ? e.getMessage() : "export error")
                         .toString().getBytes(StandardCharsets.UTF_8));
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                log.warn("write error response failed", ignored);
+            }
         } catch (Exception e) {
+            log.error("export failed, unexpected error", e);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             try (OutputStream os = response.getOutputStream()) {
                 os.write(ApiResult.fail(DemoConstants.DEMO_001)
                         .toString().getBytes(StandardCharsets.UTF_8));
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                log.warn("write error response failed", ignored);
+            }
         }
     }
 }

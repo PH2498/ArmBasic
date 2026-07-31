@@ -2,6 +2,7 @@ package com.antgroup.armbasic.demo.service;
 
 import com.antgroup.armbasic.demo.model.DemoConstants;
 import com.antgroup.armbasic.demo.model.SortResult;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -23,6 +24,7 @@ import java.util.List;
  * R04 tab 枚举校验；R05 format 不支持时回退 csv。
  * hello 导出文案，hash 导出原文+摘要，sort 导出原数组+排序结果+交换次数。
  */
+@Slf4j
 @Service
 public class ExportService {
 
@@ -54,11 +56,11 @@ public class ExportService {
 
         if ("xlsx".equals(actualFormat)) {
             content = exportXlsx(tab);
-            contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            contentType = DemoConstants.XLSX_CONTENT_TYPE;
             extension = "xlsx";
         } else {
             content = exportCsv(tab);
-            contentType = "text/csv";
+            contentType = DemoConstants.CSV_CONTENT_TYPE;
             extension = "csv";
         }
 
@@ -93,6 +95,7 @@ public class ExportService {
             }
             writer.flush();
         } catch (IOException e) {
+            log.error("exportCsv failed, tab={}", tab, e);
             throw new RuntimeException(DemoConstants.DEMO_001, e);
         }
         return baos.toByteArray();
@@ -141,6 +144,7 @@ public class ExportService {
             return baos.toByteArray();
         } catch (IOException e) {
             // 降级为 CSV 流输出
+            log.error("exportXlsx failed, tab={}", tab, e);
             throw new RuntimeException(DemoConstants.DEMO_001, e);
         }
     }
