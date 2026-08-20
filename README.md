@@ -9,6 +9,9 @@
 - FaceRecognitionModule：人脸识别模块，负责从摄像头抓取画面并识别人脸，供语音助手作为上下文使用
   - 入口：[run_face_recognition.py](ArmBasic/FaceRecognitionModule/run_face_recognition.py)
   - 文档：[README.md](ArmBasic/FaceRecognitionModule/README.md)
+- HelloWorldModule：Helloworld 示例接口模块，演示接口分层与统一响应规范（零第三方依赖）
+  - 入口：[helloworld_app.py](HelloWorldModule/helloworld_app.py)
+  - 文档：[README.md](HelloWorldModule/README.md)
 
 ## 环境与依赖
 
