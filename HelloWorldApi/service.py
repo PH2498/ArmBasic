@@ -4,12 +4,14 @@ HelloService - HelloWorld 业务逻辑层。
 纯函数，无状态，负责问候语拼装与参数校验。
 """
 
+from typing import ClassVar
+
 
 class HelloService:
     """问候服务：根据名称参数生成问候语。"""
 
-    DEFAULT_NAME = "World"
-    MAX_NAME_LENGTH = 100
+    DEFAULT_NAME: ClassVar[str] = "World"
+    MAX_NAME_LENGTH: ClassVar[int] = 100
 
     def get_greeting(self, name: str | None = None) -> str:
         """生成问候语。

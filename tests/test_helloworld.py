@@ -145,3 +145,20 @@ class TestHelloWorldRoute:
         """响应 Content-Type 应为 application/json"""
         response = client.get("/api/helloworld")
         assert response.content_type == "application/json"
+
+    # ── 异常场景 ─────────────────────────────────────
+
+    def test_should_return_structured_error_on_exception(self, client, monkeypatch):
+        """服务内部异常时返回结构化 JSON 错误响应 HWA_001"""
+        from HelloWorldApi import routes as _routes_mod
+
+        def _raise(*args, **kwargs):
+            raise RuntimeError("模拟内部异常")
+
+        monkeypatch.setattr(_routes_mod._service, "get_greeting", _raise)
+        response = client.get("/api/helloworld")
+        assert response.status_code == 500
+        data = response.get_json()
+        assert data["code"] == "HWA_001"
+        assert data["msg"] == "服务内部错误"
+        assert data["data"] is None

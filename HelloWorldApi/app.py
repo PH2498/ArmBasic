@@ -38,8 +38,10 @@ def main():
     app = create_app()
     port = int(os.environ.get("HELLOWORLD_PORT", 5000))
     debug = os.environ.get("HELLOWORLD_DEBUG", "false").lower() == "true"
+    # NOTE: Flask 内置开发服务器不适合生产环境。
+    # 生产部署建议使用 gunicorn: gunicorn -w 4 -b 0.0.0.0:5000 "HelloWorldApi.app:create_app()"
     app.run(host="0.0.0.0", port=port, debug=debug)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()
